@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        #main{
+            width: 400px;
+            height: 600px;
+            background: url("img/background.png");
+            margin:10px auto;
+            position: relative;
+            overflow: hidden;
+        }
+        .title{
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            color: white;
+            z-index: 99;
+        }
+        #stopgame{
+            font-size: 30px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        #stoppage{
+            width: 400px;
+            height: 400px;
+            padding-top: 200px;
+            position: absolute;
+            z-index: 100;
+            background-color: rgba(0, 0, 0, 0.6);
+            left: 50%;
+            margin-left: -200px;
+            top: 10px;
+            /* display: none; */
+            display: none;
+        }
+     .button{
+         width: 150px;
+         height: 50px;
+         color: #ffffff;
+         background-color: rgba(0, 0, 0, 0.6);
+         text-align: center;
+         line-height: 50px;
+         border-radius: 20px;
+         font-size: 20px;
+         font-weight: bolder;
+         margin: 0 auto;
+         margin-top: 10px;
+         cursor: pointer;
+         
+     }
+
+    </style>
+</head>
+<body>
+    <div id="main">
+        <div class="title">
+            <p>杀敌：<span id="ennum">0</span></p>
+            <p>分数：<span id="fracnum">0</span></p>
+            <p>玩家血量：<span id="bloodnum">0</span></p>
+        </div>
+        <div id="stopgame" onclick="mystopgame()">
+            <img src="./img/game_pause_nor.png" alt="">
+        </div>
+    </div>
+    <div id="stoppage">
+        <div class="button" onclick="continuegage()">继续游戏</div>
+        <div class="button" onclick="newgame()">新的游戏</div>
+        <div class="button" onclick="quitegame()">退出游戏</div>
+    </div>
+    <audio src="./sound/game_music.mp3" id="startmusic" autoplay muted></audio>
+    <audio src="./sound/bullet.mp3" id="zdmusic"></audio>
+</body>
+<script>
+    var ennum = document.getElementById('ennum');
+    var fracnum = document.getElementById('fracnum');
+    var bloodnum = document.getElementById('bloodnum')
+    var stoppage = document.getElementById('stoppage')
+    var keytrue={leftbtn:false,rightbtn:false,upbtn:false,downbtn:false}
+    var maiObj = document.getElementById('main');
+    //地方小飞机数组
+    var smallPlaneArray=[]
+    var bulletarray=[]
+
+    //音乐 v
+
+    var startmusic = document.getElementById("startmusic");
+    var zdmusic = document.getElementById('zdmusic')
+    startmusic.muted=false;
+   startmusic.play()
+   var createplane = setInterval(craeteSmallPlane,1000)//敌对飞机创建
+  var smallmove =  setInterval(smallPlaneMove,50)//小飞机移动
+   var keyca = setInterval(keycal,30) //30毫秒坚挺一次是否按下按键
+   var movebull= setInterval(movebullet,10)//子弹移动
+   var crash = setInterval(crashCheck,50)//判断碰撞
+    //暂停
+    function mystopgame(){
+        stoppage.style.display="block"
+        clearInterval(createplane)
+        clearInterval(smallmove)
+        clearInterval(keyca)
+        clearInterval(movebull)
+        clearInterval(crash)
+    }
+
+    
+//继续游戏
+
+function continuegage(){
+    stoppage.style.display="none"
+    setInterval(craeteSmallPlane,1000)//敌对飞机创建
+setInterval(smallPlaneMove,50)//小飞机移动
+  setInterval(keycal,30) //30毫秒坚挺一次是否按下按键
+  setInterval(movebullet,10)//子弹移动
+ setInterval(crashCheck,50)//判断碰撞
+}
+
+//新游戏
+
+function  newgame(){
+    window.location.reload()
+}
+
+    function SmallPlaneProto(imgSrc,x,y,speed) {
+        this.imgNode = document.createElement('img');
+        this.imgSrc=imgSrc;
+        this.x=x;
+        this.y=y;
+        this.isDead=false;
+        this.exTime=5;
+        this.speed=speed;
+        this.init=function(){
+            this.imgNode.src=this.imgSrc;
+            this.imgNode.style.position="absolute";
+            this.imgNode.style.left=this.x+'px';
+            this.imgNode.style.top=this.y+"px";
+            maiObj.appendChild(this.imgNode)
+        }
+        this.init();
+        this.move=function(){
+            this.imgNode.style.top=parseInt(this.imgNode.style.top)+this.speed+"px"
+        }
+      }
+
+      function craeteSmallPlane(){
+          var smallPlane=new SmallPlaneProto('img/gxbq.png',parseInt(Math.random()*356),-parseInt(Math.random()*100+40),parseInt(Math.random()*10))
+            smallPlaneArray.push(smallPlane)
+      }
+
+     
+
+      //飞机移动
+
+      function smallPlaneMove(){
+          for (var i = 0; i < smallPlaneArray.length; i++) {
+             if (smallPlaneArray[i].isDead==false) {
+                 //如果还活着
+                    smallPlaneArray[i].move()
+                if (parseInt(smallPlaneArray[i].imgNode.style.top)>600) {
+                    maiObj.removeChild(smallPlaneArray[i].imgNode);
+                    smallPlaneArray.splice(i,1)
+                }
+             }else{
+                //如果死了就倒计时
+                // smallPlaneArray[i].move()
+                smallPlaneArray[i].exTime--
+                if (smallPlaneArray[i].exTime==0) {
+                    maiObj.removeChild(smallPlaneArray[i].imgNode);
+                    smallPlaneArray.splice(i,1)
+                }
+             }
+            
+          }
+      }
+
+
+
+//玩家飞机
+
+function PlayPlane(srcimg,x,y,speed){
+        this.imgNode=document.createElement('img')
+        this.srcimg=srcimg
+        this.x=x
+       
+        this.y=y
+        this.speed=speed
+        this.init=function(){
+            this.imgNode.src=this.srcimg
+            this.imgNode.style.position="absolute"
+            this.imgNode.style.left=this.x+"px"
+           
+            this.imgNode.style.top=this.y+"px"
+            maiObj.appendChild(this.imgNode)
+        }
+        this.init()
+        this.moveleft=function(){
+           if (this.imgNode.style.left<="-100px") {
+               this.imgNode.style.left="400px"
+           }else{
+               this.imgNode.style.left=parseInt(this.imgNode.style.left)-this.speed+"px";
+           }
+            
+        }
+
+        this.moveright=function(){
+           
+            if (this.imgNode.style.left == "400px") {
+               
+               this.imgNode.style.left="0px"
+
+           }else{
+            
+            this.imgNode.style.left=parseInt(this.imgNode.style.left)+this.speed+"px"
+           
+           }
+
+           
+        }
+
+        this.moveup=function(){
+            if (this.imgNode.style.top=="0px") {
+                this.imgNode.style.top=="0px"
+            }else{
+                 this.imgNode.style.top=parseInt(this.imgNode.style.top)-this.speed+"px"
+            }
+           
+        }
+
+        this.movedown=function(){
+            if (this.imgNode.style.top=="500px") {
+                this.imgNode.style.top=="500px"
+            }else{
+                this.imgNode.style.top=parseInt(this.imgNode.style.top)+this.speed+"px"
+
+            }
+        }
+        this.shoot=function(){
+           
+            var newbullet=new Bullet("img/bullet1.png",parseInt(this.imgNode.style.left)+45,parseInt(this.imgNode.style.top)-10,10)
+            bulletarray.push(newbullet)
+        }
+}
+
+//子弹创建对象
+
+function Bullet(srcimg,x,y,speed) {  
+   this.imgNode = document.createElement("img");
+   this.srcimg=srcimg;
+   this.x=x;
+   this.y=y;
+   this.speed=speed;
+   this.init=function(){
+       this.imgNode.src=this.srcimg;
+       this.imgNode.style.top=this.y+"px";
+       this.imgNode.style.left=this.x+"px";
+       this.imgNode.style.position="absolute"
+       maiObj.appendChild(this.imgNode)
+   }
+   this.init()
+   this.move=function(){
+       this.imgNode.style.top=parseInt(this.imgNode.style.top)-this.speed+"px"
+      
+   }
+}
+
+
+var player = new PlayPlane("img/hero1.png",100,500,10)
+
+document.body.onkeydown=function(){
+    var e=window.event || arguments[0]
+  
+    switch (e.keyCode) {
+        case 37:
+       keytrue.leftbtn=true
+        break;
+               
+            case 38:
+            keytrue.upbtn=true
+            break;
+
+            case 39:
+            keytrue.rightbtn=true
+            break;
+
+            case 40:
+            keytrue.downbtn=true
+            break;
+            case 32:
+            player.shoot()
+            zdmusic.play()
+            break;
+        return
+    }
+}
+
+document.body.onkeyup=function(){
+    var e=window.event || arguments[0]
+  
+  switch (e.keyCode) {
+      case 37:
+     keytrue.leftbtn=false
+      break;
+             
+          case 38:
+          keytrue.upbtn=false
+          break;
+
+          case 39:
+          keytrue.rightbtn=false
+          break;
+
+          case 40:
+          keytrue.downbtn=false
+          break;
+      return
+  }
+}
+
+function keycal() { 
+  if (keytrue.leftbtn==true) {
+        player.moveleft()
+  }
+  if (keytrue.upbtn==true) {
+        player.moveup()
+  }
+  if (keytrue.rightbtn==true) {
+        player.moveright()
+  }
+  if (keytrue.downbtn==true) {
+        player.movedown()
+  }
+ 
+ }
+
+
+
+//子弹位移
+
+function movebullet(){
+    for (var i = 0; i < bulletarray.length; i++) {
+        bulletarray[i].move()
+      
+        if (parseInt(bulletarray[i].imgNode.style.top)<=0) {
+           
+            maiObj.removeChild(bulletarray[i].imgNode)
+            bulletarray.splice(i,1)
+        }
+        
+    }
+}
+
+
+
+
+//碰撞函数
+
+function crashCheck(){
+    for (var i = 0; i < smallPlaneArray.length; i++) {
+        for (var j = 0; j < bulletarray.length; j++) {
+           var btleft = parseInt(bulletarray[j].imgNode.style.left);
+            var bttop = parseInt(bulletarray[j].imgNode.style.top);
+            var pltop  = parseInt(smallPlaneArray[i].imgNode.style.top);
+            var plleft = parseInt(smallPlaneArray[i].imgNode.style.left)
+
+            if (smallPlaneArray[i].isDead==false) {
+                if (btleft>=plleft&&btleft<=plleft+51&&bttop>=pltop&&bttop<pltop+39) {
+                    maiObj.removeChild(bulletarray[j].imgNode)
+                    bulletarray.splice(j,1)
+                    smallPlaneArray[i].imgNode.src="img/enemy0_down3.png"
+                    smallPlaneArray[i].isDead=true
+
+                    ennum.innerHTML=parseInt(ennum.innerHTML)+1
+                     fracnum.innerHTML=parseInt(ennum.innerHTML)+2
+                } 
+            }
+
+            
+        }
+        
+    }
+}
+
+
+
+</script>
+</html>
